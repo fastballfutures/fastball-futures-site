@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fastball Futures</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #050608;
+  --deep: #0a0c10;
+  --panel: #0f1116;
+  --border: #1c2030;
+  --accent: #00e5a0;
+  --accent-dim: rgba(0,229,160,0.12);
+  --accent-glow: rgba(0,229,160,0.3);
+  --muted: #6b7494;
+  --text: #c8d0e8;
+  --white: #eef2ff;
+  --red: #ff4444;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--black);
+  color: var(--text);
+  font-family: 'Barlow Condensed', sans-serif;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+.cursor {
+  width: 10px; height: 10px;
+  background: var(--accent);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.2s, height 0.2s;
+  mix-blend-mode: difference;
+}
+.cursor-ring {
+  width: 36px; height: 36px;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  position: fixed;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%, -50%);
+  transition: left 0.12s ease-out, top 0.12s ease-out, width 0.2s, height 0.2s, opacity 0.2s;
+  opacity: 0.5;
+}
+body:hover .cursor-ring { opacity: 1; }
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9997;
+  opacity: 0.4;
+}
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 48px;
+  height: 72px;
+  background: rgba(5,6,8,0.7);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  z-index: 1000;
+}
+.logo-text {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 0.15em;
+  color: var(--white);
+  text-decoration: none;
+}
+.logo-text span { color: var(--accent); }
+.nav-links { display: flex; gap: 36px; list-style: none; }
+.nav-links a {
+  text-decoration: none;
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  transition: color 0.2s;
+  position: relative;
+}
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; left: 0;
+  width: 0; height: 1px;
+  background: var(--accent);
+  transition: width 0.25s;
+}
+.nav-links a:hover { color: var(--accent); }
+.nav-links a:hover::after { width: 100%; }
+.nav-cta {
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 9px 22px;
+  background: none;
+  cursor: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  transition: background 0.2s, color 0.2s;
+}
+.nav-cta:hover { background: var(--accent); color: var(--black); }
+
+.ticker-wrap {
+  position: fixed;
+  top: 72px; left: 0; right: 0;
+  height: 44px;
+  background: var(--deep);
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+}
+.ticker-track {
+  display: flex;
+  animation: tickerScroll 45s linear infinite;
+  white-space: nowrap;
+}
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 60px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  letter-spacing: .1em;
+  color: var(--muted);
+  border-right: 1px solid var(--border);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.ticker-item:hover { color: var(--accent); }
+.ticker-item .sym { color: var(--white); font-weight: 500; font-size: 13px; }
+.ticker-item .ticker-icon { display: flex; align-items: center; color: var(--accent); }
+.ticker-item .ticker-icon svg { width: 16px; height: 16px; }
+.ticker-item .ticker-dot { font-size: 5px; color: var(--border); }
+@keyframes tickerScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* PARTICLE CANVAS */
+#particle-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* HERO */
+#hero {
+  min-height: 100vh;
+  padding: 210px 48px 100px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+}
+#hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+  background-size: 80px 80px;
+  animation: gridPulse 8s ease-in-out infinite;
+}
+@keyframes gridPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+#hero::after {
+  content: '';
+  position: absolute;
+  top: 20%; left: 60%;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,229,160,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  animation: orbFloat 10s ease-in-out infinite;
+}
+@keyframes orbFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-40px) scale(1.1); }
+}
+.hero-headline {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(5rem, 12vw, 11rem);
+  color: var(--white);
+  line-height: .88;
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.4s forwards;
+}
+.hero-headline .accent { color: var(--accent); }
+.hero-headline .outline {
+  -webkit-text-stroke: 2px var(--white);
+  color: transparent;
+}
+.hero-sub {
+  margin-top: 28px;
+  max-width: 460px;
+  color: var(--muted);
+  line-height: 1.7;
+  font-size: 16px;
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.6s forwards;
+}
+.hero-actions {
+  margin-top: 40px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 2;
+  opacity: 0;
+  animation: fadeUp 0.8s 0.8s forwards;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--black);
+  padding: 15px 34px;
+  text-decoration: none;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s;
+}
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.15);
+  transform: translateX(-101%);
+  transition: transform 0.3s;
+}
+.btn-primary:hover::after { transform: translateX(0); }
+.btn-primary:hover { box-shadow: 0 0 30px var(--accent-glow); }
+.btn-ghost {
+  color: var(--muted);
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: color 0.2s;
+}
+.btn-ghost:hover { color: var(--white); }
+.btn-ghost-arrow {
+  width: 32px; height: 1px;
+  background: var(--muted);
+  position: relative;
+  transition: width 0.3s, background 0.2s;
+}
+.btn-ghost-arrow::after {
+  content: '';
+  position: absolute;
+  right: 0; top: -3px;
+  border: 4px solid transparent;
+  border-left: 6px solid var(--muted);
+  transition: border-left-color 0.2s;
+}
+.btn-ghost:hover .btn-ghost-arrow { width: 48px; background: var(--white); }
+.btn-ghost:hover .btn-ghost-arrow::after { border-left-color: var(--white); }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* SECTIONS */
+section { position: relative; }
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 80px 48px;
+}
+.section-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .2em;
+  color: var(--accent);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.section-label::before {
+  content: '';
+  display: block;
+  width: 20px; height: 1px;
+  background: var(--accent);
+}
+h2 {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(42px, 6vw, 72px);
+  color: var(--white);
+  line-height: .92;
+  margin-bottom: 24px;
+}
+
+#approach {
+  background: var(--deep);
+  position: relative;
+  overflow: hidden;
+}
+#approach::before {
+  content: '';
+  position: absolute;
+  top: -200px; right: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,229,160,0.04) 0%, transparent 65%);
+  pointer-events: none;
+}
+.approach-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 80px;
+  align-items: center;
+}
+.approach-body { color: var(--muted); font-size: 17px; line-height: 1.8; }
+.approach-body p + p { margin-top: 16px; }
+.pillars-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+}
+.pillars { display: flex; flex-direction: column; gap: 2px; }
+.pillar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 28px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  transition: border-color 0.25s, background 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.pillar::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transition: transform 0.3s;
+}
+.pillar:hover { border-color: var(--accent); background: var(--accent-dim); }
+.pillar:hover::before { transform: scaleY(1); }
+.pillar-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 36px;
+  color: var(--border);
+  min-width: 40px;
+  transition: color 0.25s;
+}
+.pillar:hover .pillar-num { color: var(--accent); }
+.pillar-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  color: var(--white);
+  letter-spacing: .05em;
+}
+.pillar-desc {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  line-height: 1.6;
+}
+
+/* RULES */
+#rules {
+  background: var(--black);
+  overflow: hidden;
+}
+#rules::before {
+  content: '';
+  position: absolute;
+  bottom: -150px; left: -150px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(0,229,160,0.05) 0%, transparent 65%);
+  pointer-events: none;
+}
+.rules-bg-text {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(120px, 20vw, 280px);
+  color: rgba(255,255,255,0.015);
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: .05em;
+}
+.rules-list { display: flex; flex-direction: column; position: relative; z-index: 2; }
+.rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 32px;
+  padding: 40px 0;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+.rule-item:first-child { border-top: 1px solid var(--border); }
+.rule-item::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.4s;
+}
+.rule-item:hover::after { transform: scaleX(1); }
+.rule-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: .1em;
+  padding-top: 6px;
+  min-width: 40px;
+}
+.rule-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 32px;
+  color: var(--white);
+  letter-spacing: .04em;
+  margin-bottom: 6px;
+  transition: color 0.2s;
+}
+.rule-item:hover .rule-title { color: var(--accent); }
+.rule-body { color: var(--muted); font-size: 15px; line-height: 1.7; max-width: 640px; }
+
+/* ABOUT */
+#about {
+  background: var(--deep);
+  border-top: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+#about::after {
+  content: '';
+  position: absolute;
+  top: 50%; right: -100px;
+  transform: translateY(-50%);
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(0,229,160,0.04) 0%, transparent 65%);
+  pointer-events: none;
+}
+.about-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 80px;
+  align-items: start;
+}
+.about-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  padding: 36px;
+  position: relative;
+}
+.about-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(to right, var(--accent), transparent);
+}
+.manifesto { display: flex; flex-direction: column; }
+.manifesto-line {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border);
+}
+.manifesto-line:last-child { border-bottom: none; }
+.manifesto-check { color: var(--accent); font-family: 'DM Mono', monospace; font-size: 13px; min-width: 20px; }
+.manifesto-text { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 600; color: var(--white); letter-spacing: .03em; }
+.manifesto-text em { font-style: normal; color: var(--accent); }
+.about-body { color: var(--muted); font-size: 16px; line-height: 1.8; }
+.about-body p + p { margin-top: 16px; }
+
+/* CONTACT */
+#contact {
+  background: var(--black);
+  border-top: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+#contact::before {
+  content: '';
+  position: absolute;
+  top: -100px; left: 40%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(0,229,160,0.04) 0%, transparent 65%);
+  pointer-events: none;
+}
+.contact-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+}
+.contact-form { display: flex; flex-direction: column; gap: 16px; }
+.form-row { display: flex; flex-direction: column; gap: 8px; }
+.form-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .15em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.form-input, .form-textarea {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--white);
+  padding: 14px 18px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+  resize: none;
+  cursor: none;
+}
+.form-input:focus, .form-textarea:focus { border-color: var(--accent); background: var(--accent-dim); }
+.form-textarea { height: 120px; }
+.form-submit {
+  background: var(--accent);
+  color: var(--black);
+  border: none;
+  padding: 15px 34px;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  cursor: none;
+  transition: opacity 0.2s, box-shadow 0.2s;
+  align-self: flex-start;
+}
+.form-submit:hover { box-shadow: 0 0 30px var(--accent-glow); opacity: 0.9; }
+.contact-info { padding-top: 8px; }
+.contact-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 24px 0;
+  border-bottom: 1px solid var(--border);
+}
+.contact-detail:first-child { padding-top: 0; }
+.contact-detail-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .15em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.contact-detail-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  color: var(--accent);
+  letter-spacing: .05em;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.contact-detail-value:hover { color: var(--white); }
+
+/* SOCIAL LINKS */
+.contact-socials {
+  display: flex;
+  gap: 12px;
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border);
+}
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px; height: 44px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.social-link:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+
+/* FOOTER */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 28px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: .08em;
+}
+.footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: .12em; color: var(--white); }
+.footer-logo span { color: var(--accent); }
+.footer-socials { display: flex; gap: 12px; align-items: center; }
+.footer-social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px; height: 34px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.footer-social-link:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+
+/* SCROLL REVEAL */
+.reveal { opacity: 0; transform: translateY(40px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+.reveal-delay-4 { transition-delay: 0.4s; }
+
+/* MOBILE */
+@media (max-width: 900px) {
+  .nav-links { display: none; }
+  .approach-grid, .about-grid, .contact-inner { grid-template-columns: 1fr; gap: 48px; }
+  .section-inner { padding: 80px 24px; }
+  nav { padding: 0 24px; }
+  footer { padding: 24px; flex-direction: column; gap: 16px; text-align: center; }
+  #hero { padding: 160px 24px 80px; }
+  .hero-actions { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+<canvas id="particle-canvas"></canvas>
+
+<nav>
+  <a href="#" class="logo-text">Fastball<span>.</span>Futures</a>
+  <ul class="nav-links">
+    <li><a href="#approach">Approach</a></li>
+    <li><a href="#rules">Rules</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <button class="nav-cta" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">Get In Touch</button>
+</nav>
+
+<div class="ticker-wrap">
+  <div class="ticker-track" id="ticker"></div>
+</div>
+
+<section id="hero">
+  <h1 class="hero-headline">
+    Wait For<br>Your <span class="accent">Pitch.</span><br><span class="outline">Swing Hard.</span>
+  </h1>
+  <p class="hero-sub">
+    Discipline, structure, and timing — not hype, not shortcuts. We define risk before entry, respect our stops, and let process drive outcome.
+  </p>
+  <div class="hero-actions">
+    <a href="#approach" class="btn-primary">Our Approach</a>
+    <a href="#rules" class="btn-ghost">
+      <span class="btn-ghost-arrow"></span>
+      View Rules
+    </a>
+  </div>
+</section>
+
+<section id="approach">
+  <div class="section-inner">
+    <div class="approach-grid">
+      <div class="reveal">
+        <div class="section-label">Our Edge</div>
+        <h2>The Edge Is<br>Discipline</h2>
+        <div class="approach-body">
+          <p>Most traders lose not because they lack strategy — they lose because they lack discipline. Fastball Futures was built around a simple truth: the market rewards those who wait for their pitch.</p>
+          <p>We don't chase missed moves. We don't revenge trade. We don't overtrade. Every session begins with a plan, and we stick to it — win or lose.</p>
+        </div>
+      </div>
+      <div class="pillars-grid reveal reveal-delay-2">
+        <div class="pillar">
+          <div class="pillar-num">01</div>
+          <div>
+            <div class="pillar-title">Patience Over Activity</div>
+            <div class="pillar-desc">We wait for A-grade setups, not volume.</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">02</div>
+          <div>
+            <div class="pillar-title">Structure Before Entry</div>
+            <div class="pillar-desc">Every trade is mapped before the trigger is pulled.</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">03</div>
+          <div>
+            <div class="pillar-title">Timing Is Everything</div>
+            <div class="pillar-desc">The best setup at the wrong time is still the wrong trade.</div>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-num">04</div>
+          <div>
+            <div class="pillar-title">Consistency Compounds</div>
+            <div class="pillar-desc">Small, steady gains beat reckless swings every time.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="rules">
+  <div class="rules-bg-text">RULES</div>
+  <div class="section-inner" style="position:relative;z-index:2;">
+    <div class="section-label reveal">Non-Negotiables</div>
+    <h2 class="reveal">The Rules<br>Don't Bend</h2>
+    <div class="rules-list">
+      <div class="rule-item reveal">
+        <div class="rule-num">01</div>
+        <div class="rule-content">
+          <div class="rule-title">Risk Is Defined Before Entry</div>
+          <div class="rule-body">Every trade has a hard stop defined before the order is placed. We never enter a trade we can't afford to lose. Risk is a fixed number, not a feeling.</div>
+        </div>
+      </div>
+      <div class="rule-item reveal reveal-delay-1">
+        <div class="rule-num">02</div>
+        <div class="rule-content">
+          <div class="rule-title">Stops Are Respected — Always</div>
+          <div class="rule-body">Moving a stop against your position is not risk management. It's hope. Stops get hit. That's part of the game. We don't negotiate with the market.</div>
+        </div>
+      </div>
+      <div class="rule-item reveal reveal-delay-2">
+        <div class="rule-num">03</div>
+        <div class="rule-content">
+          <div class="rule-title">Process Comes Before Outcome</div>
+          <div class="rule-body">A losing trade executed correctly beats a winning trade executed sloppily. We judge the decision, not the result. If the process was right, we move forward.</div>
+        </div>
+      </div>
+      <div class="rule-item reveal reveal-delay-3">
+        <div class="rule-num">04</div>
+        <div class="rule-content">
+          <div class="rule-title">No Chasing, No Revenge</div>
+          <div class="rule-body">Missed your entry? It's gone. Had a bad morning? That's done too. Every trade lives in isolation. Emotional carry-over is how accounts blow up.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="section-inner">
+    <div class="about-grid">
+      <div class="reveal">
+        <div class="section-label">The Framework</div>
+        <h2>Built on<br>Structure</h2>
+        <div class="about-body">
+          <p>The name says it all: a fastball is fast, direct, and honest. You either hit it or you don't. No excuses. We bring that same clarity to how we approach futures markets every session.</p>
+        </div>
+      </div>
+      <div class="about-card reveal reveal-delay-2">
+        <div class="manifesto">
+          <div class="manifesto-line">
+            <span class="manifesto-check">&#10003;</span>
+            <span class="manifesto-text">We trade with <em>defined risk</em></span>
+          </div>
+          <div class="manifesto-line">
+            <span class="manifesto-check">&#10003;</span>
+            <span class="manifesto-text">We respect our <em>daily stop</em></span>
+          </div>
+          <div class="manifesto-line">
+            <span class="manifesto-check">&#10003;</span>
+            <span class="manifesto-text">We follow the <em>plan, always</em></span>
+          </div>
+          <div class="manifesto-line">
+            <span class="manifesto-check">&#10003;</span>
+            <span class="manifesto-text">We review, <em>improve, repeat</em></span>
+          </div>
+          <div class="manifesto-line">
+            <span class="manifesto-check">&#10003;</span>
+            <span class="manifesto-text">We stay <em>flat when flat</em> is right</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="section-inner">
+    <div class="contact-inner">
+      <div class="reveal">
+        <div class="section-label">Get In Touch</div>
+        <h2>Let's Talk<br>Shop</h2>
+        <div class="contact-info">
+          <div class="contact-detail">
+            <span class="contact-detail-label">Email</span>
+            <a href="mailto:info@fastballfutures.com" class="contact-detail-value">info@fastballfutures.com</a>
+          </div>
+          <div class="contact-detail">
+            <span class="contact-detail-label">Response Time</span>
+            <span class="contact-detail-value">Within 24 Hours</span>
+          </div>
+          <div class="contact-detail">
+            <span class="contact-detail-label">Location</span>
+            <span class="contact-detail-value">United States</span>
+          </div>
+          <div class="contact-socials">
+            <a href="https://youtube.com/fastballfutures" target="_blank" class="social-link" title="YouTube">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+            </a>
+            <a href="https://instagram.com/fastballfutures" target="_blank" class="social-link" title="Instagram">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+            </a>
+            <a href="https://discord.gg/WqVxz3V6" target="_blank" class="social-link" title="Discord">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.044.03.056a19.9 19.9 0 0 0 5.993 3.03.077.077 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="contact-form reveal reveal-delay-2">
+        <div class="form-row">
+          <label class="form-label">Name</label>
+          <input type="text" class="form-input" placeholder="Your name">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-input" placeholder="your@email.com">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Message</label>
+          <textarea class="form-textarea" placeholder="What's on your mind?"></textarea>
+        </div>
+        <button class="form-submit">Send Message</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Fastball<span>.</span>Futures</div>
+  <div>&#169; 2026 Fastball Futures. All rights reserved.</div>
+  <div class="footer-socials">
+    <a href="https://youtube.com/fastballfutures" target="_blank" class="footer-social-link" title="YouTube">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+    </a>
+    <a href="https://instagram.com/fastballfutures" target="_blank" class="footer-social-link" title="Instagram">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+    </a>
+    <a href="https://discord.gg/WqVxz3V6" target="_blank" class="footer-social-link" title="Discord">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.044.03.056a19.9 19.9 0 0 0 5.993 3.03.077.077 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+    </a>
+  </div>
+</footer>
+
+<script>
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mouseX = 0, mouseY = 0, ringX = 0, ringY = 0;
+
+document.addEventListener('mousemove', e => {
+  mouseX = e.clientX; mouseY = e.clientY;
+  cursor.style.left = mouseX + 'px';
+  cursor.style.top = mouseY + 'px';
+});
+
+function animateRing() {
+  ringX += (mouseX - ringX) * 0.12;
+  ringY += (mouseY - ringY) * 0.12;
+  ring.style.left = ringX + 'px';
+  ring.style.top = ringY + 'px';
+  requestAnimationFrame(animateRing);
+}
+animateRing();
+
+document.querySelectorAll('a, button, .pillar, .rule-item').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '18px'; cursor.style.height = '18px';
+    ring.style.width = '54px'; ring.style.height = '54px';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '10px'; cursor.style.height = '10px';
+    ring.style.width = '36px'; ring.style.height = '36px';
+  });
+});
+
+// Ticker — socials with icons
+const socials = [
+  {
+    label: 'YouTube',
+    handle: '@FastballFutures',
+    url: 'https://youtube.com/fastballfutures',
+    icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>'
+  },
+  {
+    label: 'Instagram',
+    handle: '@FastballFutures',
+    url: 'https://instagram.com/fastballfutures',
+    icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>'
+  },
+  {
+    label: 'Discord',
+    handle: '@FastballFutures',
+    url: 'https://discord.gg/WqVxz3V6',
+    icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.044.03.056a19.9 19.9 0 0 0 5.993 3.03.077.077 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>'
+  },
+];
+const track = document.getElementById('ticker');
+const items = [...socials, ...socials];
+track.innerHTML = items.map(i =>
+  '<a href="' + i.url + '" target="_blank" class="ticker-item">' +
+    '<span class="ticker-icon">' + i.icon + '</span>' +
+    '<span class="sym">' + i.handle + '</span>' +
+  '</a>'
+).join('');
+
+// Particle canvas
+const canvas = document.getElementById('particle-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+function randomBetween(a, b) { return a + Math.random() * (b - a); }
+
+function createParticle() {
+  return {
+    x: randomBetween(0, W),
+    y: randomBetween(0, H),
+    r: randomBetween(0.5, 1.8),
+    dx: randomBetween(-0.15, 0.15),
+    dy: randomBetween(-0.3, -0.05),
+    alpha: randomBetween(0.1, 0.5),
+    fade: randomBetween(0.001, 0.003),
+  };
+}
+
+for (let i = 0; i < 120; i++) particles.push(createParticle());
+
+function drawParticles() {
+  ctx.clearRect(0, 0, W, H);
+  particles.forEach((p, i) => {
+    p.x += p.dx;
+    p.y += p.dy;
+    p.alpha -= p.fade;
+    if (p.alpha <= 0 || p.y < -10) particles[i] = createParticle();
+
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0, 229, 160, ${p.alpha})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Nav active highlight
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+  navLinks.forEach(a => {
+    a.style.color = a.getAttribute('href') === '#' + current ? 'var(--accent)' : '';
+  });
+});
+</script>
+</body>
+</html>
