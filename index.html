@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Fastball Futures</title>
+
   <style>
     :root {
       --bg: #070816;
@@ -11,21 +12,15 @@
       --line: rgba(255,255,255,0.12);
       --text: #f7f7fb;
       --muted: rgba(247,247,251,0.72);
-      --pink: #f15cff;
-      --blue: #4cc9ff;
     }
 
     * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      min-height: 100vh;
       font-family: Arial, Helvetica, sans-serif;
       color: var(--text);
-      background:
-        radial-gradient(circle at top, rgba(76, 201, 255, 0.14), transparent 30%),
-        radial-gradient(circle at 50% 0%, rgba(241, 92, 255, 0.14), transparent 35%),
-        linear-gradient(180deg, #0a0d22 0%, #05060f 100%);
+      background: linear-gradient(180deg, #0a0d22 0%, #05060f 100%);
     }
 
     .wrap {
@@ -37,7 +32,6 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 18px;
       padding: 20px 0;
     }
 
@@ -45,280 +39,79 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      min-width: 0;
     }
 
     .brand img {
       width: 58px;
       height: 58px;
-      object-fit: cover;
-      border-radius: 16px;
-      border: 1px solid var(--line);
-      box-shadow: 0 10px 32px rgba(241, 92, 255, 0.2);
-    }
-
-    .brand-text {
-      min-width: 0;
-    }
-
-    .brand-text h1 {
-      margin: 0;
-      font-size: 16px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      white-space: nowrap;
-    }
-
-    .brand-text p {
-      margin: 4px 0 0;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    nav {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    nav a,
-    .button,
-    .social {
-      text-decoration: none;
-      color: var(--text);
-      border: 1px solid var(--line);
-      background: var(--panel);
-      backdrop-filter: blur(10px);
-      transition: 0.2s ease;
+      border-radius: 12px;
     }
 
     nav a {
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-size: 14px;
-    }
-
-    nav a:hover,
-    .button:hover,
-    .social:hover {
-      transform: translateY(-1px);
-      border-color: rgba(255,255,255,0.22);
-      background: rgba(255,255,255,0.1);
+      margin-left: 10px;
+      text-decoration: none;
+      color: white;
+      border: 1px solid var(--line);
+      padding: 8px 12px;
+      border-radius: 20px;
     }
 
     .hero {
       display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
-      gap: 28px;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      padding: 40px 0;
       align-items: center;
-      padding: 32px 0 72px;
     }
 
-    .hero-copy .eyebrow {
-      display: inline-block;
-      padding: 8px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.05);
-      color: var(--muted);
-      font-size: 12px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-    }
-
-    .hero-copy h2 {
-      margin: 18px 0 0;
-      font-size: clamp(38px, 6vw, 70px);
-      line-height: 0.96;
-      letter-spacing: -0.03em;
-    }
-
-    .hero-copy p {
-      margin: 18px 0 0;
-      color: var(--muted);
-      font-size: 18px;
-      line-height: 1.7;
-      max-width: 60ch;
-    }
-
-    .actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 28px;
-    }
-
-    .button {
-      padding: 14px 18px;
-      border-radius: 16px;
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    .button.primary {
-      background: linear-gradient(135deg, rgba(241,92,255,0.22), rgba(76,201,255,0.18));
-      border-color: rgba(241,92,255,0.32);
-    }
-
-    .hero-card {
-      border: 1px solid rgba(255,255,255,0.1);
-      background: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.04));
-      border-radius: 28px;
-      padding: 18px;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+    h2 {
+      font-size: 48px;
+      line-height: 1.1;
     }
 
     .hero-card img {
       width: 100%;
-      display: block;
-      object-fit: cover;
-      aspect-ratio: 1 / 1;
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      padding-bottom: 22px;
-    }
-
-    .panel {
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.05);
-      border-radius: 24px;
-      padding: 24px;
-    }
-
-    .panel h3 {
-      margin: 0 0 10px;
-      font-size: 22px;
-    }
-
-    .panel p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-      font-size: 15px;
-    }
-
-    .connect {
-      padding: 18px 0 72px;
-    }
-
-    .connect-card {
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.05);
-      border-radius: 28px;
-      padding: 28px;
-    }
-
-    .connect-card h3 {
-      margin: 0 0 10px;
-      font-size: clamp(28px, 4vw, 40px);
-    }
-
-    .connect-card p {
-      margin: 0;
-      color: var(--muted);
-      line-height: 1.7;
-      max-width: 60ch;
-    }
-
-    .socials {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 24px;
-    }
-
-    .social {
-      padding: 14px 16px;
-      border-radius: 16px;
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    footer {
-      padding: 0 0 28px;
-      color: rgba(247,247,251,0.5);
-      font-size: 13px;
-      text-align: center;
+      border-radius: 20px;
     }
 
     @media (max-width: 900px) {
       .hero { grid-template-columns: 1fr; }
-      .grid { grid-template-columns: 1fr; }
-      header { flex-direction: column; align-items: flex-start; }
-      nav { justify-content: flex-start; }
     }
   </style>
 </head>
+
 <body>
   <div class="wrap">
+
     <header>
       <div class="brand">
-        <img src="logo.jpeg" alt="Fastball Futures logo" />
-        <div class="brand-text">
-          <h1>Fastball Futures</h1>
-          <p>Discipline • Structure • Timing</p>
+        <img src="/logo.jpeg" alt="Fastball Futures logo" />
+        <div>
+          <strong>FASTBALL FUTURES</strong><br>
+          <small>Discipline • Structure • Timing</small>
         </div>
       </div>
+
       <nav>
-        <a href="#about">About</a>
-        <a href="#connect">Connect</a>
+        <a href="#">About</a>
+        <a href="#">Connect</a>
       </nav>
     </header>
 
     <section class="hero">
-      <div class="hero-copy">
-        <span class="eyebrow">Coming Soon</span>
-        <h2>Trust the process. Respect the count. Wait for our pitch.</h2>
-        <p>
-  <img src="logo.jpeg" class="logo" />
-        </p>
-        <div class="actions">
-          <a class="button primary" href="mailto:info@fastballfutures.com">info@fastballfutures.com</a>
-          <a class="button" href="#connect">Follow the brand</a>
-        </div>
+      <div>
+        <h2>
+          Trust the process.<br>
+          Respect the count.<br>
+          Wait for our pitch.
+        </h2>
       </div>
 
       <div class="hero-card">
-        <img src="logo.jpeg" alt="Fastball Futures brand art" />
+        <img src="/logo.jpeg" alt="Fastball Futures brand art" />
       </div>
     </section>
 
-    <section id="about" class="grid">
-      <div class="panel">
-        <h3>Respect the count</h3>
-        <p>A measured approach built around patience, timing, and staying selective.</p>
-      </div>
-      <div class="panel">
-        <h3>Wait for our pitch</h3>
-        <p>We are not built on chasing every move. We let the setup come to us.</p>
-      </div>
-      <div class="panel">
-        <h3>Take the right swing</h3>
-        <p>When the opportunity is in the zone, we step in with intent and execution.</p>
-      </div>
-    </section>
-
-    <section id="connect" class="connect">
-      <div class="connect-card">
-        <h3>Connect with Fastball Futures</h3>
-        <p>Follow the brand, join the community, and stay tapped in as the site evolves.</p>
-        <div class="socials">
-          <a class="social" href="https://www.youtube.com/watch?v=gMT_wW_QZ4A" target="_blank" rel="noreferrer">YouTube</a>
-          <a class="social" href="https://instagram.com/fastballfutures" target="_blank" rel="noreferrer">Instagram</a>
-          <a class="social" href="https://discord.gg/pBtARKdrm" target="_blank" rel="noreferrer">Discord</a>
-          <a class="social" href="mailto:info@fastballfutures.com">Email</a>
-        </div>
-      </div>
-    </section>
-
-    <footer>© Fastball Futures</footer>
   </div>
 </body>
 </html>
